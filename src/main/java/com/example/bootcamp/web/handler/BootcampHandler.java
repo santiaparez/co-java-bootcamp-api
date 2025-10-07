@@ -4,7 +4,7 @@ import com.example.bootcamp.domain.error.DomainException;
 import com.example.bootcamp.domain.model.BootcampPageRequest;
 import com.example.bootcamp.domain.model.BootcampSortField;
 import com.example.bootcamp.domain.model.PaginatedBootcamp;
-import com.example.bootcamp.domain.model.CapabilitySummary;
+import com.example.bootcamp.domain.model.BootcampSummary;
 import com.example.bootcamp.domain.model.SortDirection;
 import com.example.bootcamp.domain.model.TechnologySummary;
 import com.example.bootcamp.domain.usecase.CreateBootcampUseCase;
@@ -33,7 +33,7 @@ public class BootcampHandler {
 
   public Mono<ServerResponse> createBootcamp(ServerRequest req){
     return validatedBody(req, CreateBootcampRequest.class, body ->
-      createBootcamp.execute(body.name(), body.description(), body.technologies())
+      createBootcamp.execute(body.name(), body.description(), body.launchDate(), body.durationWeeks(), body.capabilities())
           .flatMap(f -> okJson(new IdResponse(f.id())))
     );
   }
@@ -59,12 +59,25 @@ public class BootcampHandler {
       );
     }
 
-    static BootcampResponse bootcamp(CapabilitySummary summary){
+    static BootcampResponse bootcamp(BootcampSummary summary){
       return new BootcampResponse(
         summary.id(),
         summary.name(),
         summary.description(),
-        summary.technologies().stream().map(Mapper::technology).toList()
+        summary.launchDate(),
+        summary.durationWeeks(),
+        summary.capabilities().stream().map(Mapper::capability).toList(),
+        summary.capabilityCount()
+      );
+    }
+
+    static CapabilityResponse capability(com.example.bootcamp.domain.model.CapabilitySummary capability) {
+      return new CapabilityResponse(
+              capability.id(),
+              capability.name(),
+              capability.description(),
+              capability.technologies().stream().map(Mapper::technology).toList(),
+              capability.technologyCount()
       );
     }
 
@@ -81,7 +94,7 @@ public class BootcampHandler {
               .map(String::toUpperCase)
               .map(value -> switch (value) {
                 case "NAME" -> BootcampSortField.NAME;
-                case "TECHNOLOGY_COUNT", "TECHNOLOGIES" -> BootcampSortField.TECHNOLOGY_COUNT;
+                case "TECHNOLOGY_COUNT", "TECHNOLOGIES", "CAPABILITY_COUNT", "CAPABILITIES" -> BootcampSortField.CAPABILITY_COUNT;
                 default -> throw new IllegalArgumentException("invalid.sort.by");
               })
               .orElse(BootcampSortField.NAME);

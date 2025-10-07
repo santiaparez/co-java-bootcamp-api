@@ -8,12 +8,15 @@ class BootcampTest {
 
   @Test
   void createBootcamp_ok() {
-    Bootcamp bootcamp = new Bootcamp("f-1", "Acme", "des", java.util.List.of("t1", "t2", "t3"));
+    var launchDate = java.time.LocalDate.of(2024, 1, 1);
+    Bootcamp bootcamp = new Bootcamp("f-1", "Acme", "des", launchDate, 12, java.util.List.of("c1", "c2"));
 
     assertEquals("f-1", bootcamp.id());
     assertEquals("Acme", bootcamp.name());
     assertEquals("des", bootcamp.description());
-    assertEquals(java.util.List.of("t1", "t2", "t3"), bootcamp.technologies());
+    assertEquals(launchDate, bootcamp.launchDate());
+    assertEquals(12, bootcamp.durationWeeks());
+    assertEquals(java.util.List.of("c1", "c2"), bootcamp.capabilities());
   }
 
 

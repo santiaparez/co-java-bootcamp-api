@@ -1,9 +1,12 @@
 package com.example.bootcamp.infrastructure.repository.documents;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("bootcamp")
+import java.time.LocalDate;
+
+@Table(value = "bootcamps", schema = "bootcamp")
 public class BootcampEntity {
 
     @Id
@@ -12,6 +15,12 @@ public class BootcampEntity {
     private String name;
 
     private String description;
+
+    @Column("launch_date")
+    private LocalDate launchDate;
+
+    @Column("duration_weeks")
+    private Integer durationWeeks;
 
     public String getId() {
         return id;
@@ -35,5 +44,21 @@ public class BootcampEntity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public LocalDate getLaunchDate() {
+        return launchDate;
+    }
+
+    public void setLaunchDate(LocalDate launchDate) {
+        this.launchDate = launchDate;
+    }
+
+    public Integer getDurationWeeks() {
+        return durationWeeks;
+    }
+
+    public void setDurationWeeks(Integer durationWeeks) {
+        this.durationWeeks = durationWeeks;
     }
 }

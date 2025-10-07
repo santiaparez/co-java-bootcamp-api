@@ -3,7 +3,7 @@ package com.example.bootcamp.domain.model;
 import java.util.List;
 
 public record PaginatedBootcamp(
-        List<CapabilitySummary> content,
+        List<BootcampSummary> content,
         int page,
         int size,
         long totalElements,
