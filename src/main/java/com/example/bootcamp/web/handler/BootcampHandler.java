@@ -4,11 +4,7 @@ import com.example.bootcamp.domain.error.DomainException;
 import com.example.bootcamp.domain.error.ErrorCodes;
 import com.example.bootcamp.domain.model.BootcampPageRequest;
 import com.example.bootcamp.domain.model.BootcampSortField;
-import com.example.bootcamp.domain.model.BootcampSummary;
-import com.example.bootcamp.domain.model.CapabilitySummary;
-import com.example.bootcamp.domain.model.PaginatedBootcamp;
 import com.example.bootcamp.domain.model.SortDirection;
-import com.example.bootcamp.domain.model.TechnologySummary;
 import com.example.bootcamp.domain.usecase.CreateBootcampUseCase;
 import com.example.bootcamp.domain.usecase.DeleteBootcampUseCase;
 import com.example.bootcamp.domain.usecase.ListBootcampUseCase;
@@ -58,7 +54,7 @@ public class BootcampHandler {
   public Mono<ServerResponse> getAllBootcamp(ServerRequest req) {
     return parsePageRequest(req)
         .flatMap(listBootcamp::execute)
-        .flatMap(page -> okJson(Mapper.page(page)))
+        .flatMap(page -> okJson(BootcampResponseMapper.page(page)))
         .onErrorResume(DomainException.class, ex -> problem(mapHttp(ex.getCode()), ex.getMessage()));
   }
 
@@ -67,46 +63,6 @@ public class BootcampHandler {
     return deleteBootcampUseCase.execute(bootcampId)
         .then(ServerResponse.noContent().build())
         .onErrorResume(DomainException.class, ex -> problem(mapHttp(ex.getCode()), ex.getMessage()));
-  }
-
-
-  // helpers
-  private static class Mapper {
-    static BootcampPageResponse page(PaginatedBootcamp page) {
-      return new BootcampPageResponse(
-              page.content().stream().map(Mapper::bootcamp).toList(),
-              page.page(),
-              page.size(),
-              page.totalElements(),
-              page.totalPages()
-      );
-    }
-
-    static BootcampResponse bootcamp(BootcampSummary summary){
-      return new BootcampResponse(
-        summary.id(),
-        summary.name(),
-        summary.description(),
-        summary.launchDate(),
-        summary.durationWeeks(),
-        summary.capabilities().stream().map(Mapper::capability).toList(),
-        summary.capabilityCount()
-      );
-    }
-
-    static CapabilityResponse capability(CapabilitySummary capability) {
-      return new CapabilityResponse(
-              capability.id(),
-              capability.name(),
-              capability.description(),
-              capability.technologies().stream().map(Mapper::technology).toList(),
-              capability.technologyCount()
-      );
-    }
-
-    static TechnologyResponse technology(TechnologySummary technology) {
-      return new TechnologyResponse(technology.id(), technology.name());
-    }
   }
 
   private Mono<BootcampPageRequest> parsePageRequest(ServerRequest req) {
