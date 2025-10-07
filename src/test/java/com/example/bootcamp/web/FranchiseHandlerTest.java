@@ -15,10 +15,13 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.reactive.function.server.HandlerStrategies;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+
 class BootcampHandlerTest {
 
   private final CreateBootcampUseCase create = Mockito.mock(CreateBootcampUseCase.class);
   private final ListBootcampUseCase getAll = Mockito.mock(ListBootcampUseCase.class);
+  private final DeleteBootcampUseCase delete = Mockito.mock(DeleteBootcampUseCase.class);
 
   private WebTestClient client;
 
@@ -29,7 +32,8 @@ class BootcampHandlerTest {
     BootcampHandler handler = new BootcampHandler(
         validator,
         create,
-        getAll
+        getAll,
+        delete
     );
     client = WebTestClient.bindToRouterFunction(new RouterConfig().routes(handler))
         .handlerStrategies(HandlerStrategies.withDefaults())
@@ -40,12 +44,12 @@ class BootcampHandlerTest {
 
   @Test
   void createTech_success() {
-    Mockito.when(create.execute("Acme","des", java.util.List.of("t1","t2","t3")))
-        .thenReturn(Mono.just(new Bootcamp("id-1", "Acme", "des", java.util.List.of("t1","t2","t3"))));
+    Mockito.when(create.execute("Acme","des", LocalDate.EPOCH, 2, java.util.List.of("t1","t2","t3")))
+        .thenReturn(Mono.just(new Bootcamp("id-1", "Acme", "des", LocalDate.EPOCH, 2,java.util.List.of("t1","t2","t3"))));
 
     client.post().uri("/bootcamp")
         .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(new CreateBootcampRequest("Acme","des", java.util.List.of("t1","t2","t3")))
+        .bodyValue(new CreateBootcampRequest("Acme","des", LocalDate.EPOCH, 2,java.util.List.of("t1","t2","t3")))
         .exchange()
         .expectStatus().isOk()
         .expectBody()
@@ -56,11 +60,11 @@ class BootcampHandlerTest {
   void createTech_validationError() {
     client.post().uri("/bootcamp")
         .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(new CreateBootcampRequest("","", java.util.List.of("t1","t2","t3")))
+        .bodyValue(new CreateBootcampRequest("","", LocalDate.EPOCH, 2,java.util.List.of("t1","t2","t3")))
         .exchange()
         .expectStatus().isBadRequest()
         .expectBody()
-        .jsonPath("$.message").isEqualTo("no debe estar vacío");
+        .jsonPath("$.message").isEqualTo("no debe estar vacío,no debe estar vacío");
   }
 
 }

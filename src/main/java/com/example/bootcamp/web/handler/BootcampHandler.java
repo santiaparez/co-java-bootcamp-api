@@ -147,7 +147,7 @@ public class BootcampHandler {
   }
   private int mapHttp(com.example.bootcamp.domain.error.ErrorCodes code){
     return switch (code){
-      case TECHNOLOGY_NOT_FOUND, BRANCH_NOT_FOUND, PRODUCT_NOT_FOUND -> 404;
+      case TECHNOLOGY_NOT_FOUND -> 404;
       case BOOTCAMP_NOT_FOUND -> 404;
       case VALIDATION_ERROR -> 400;
       case CONFLICT -> 409;

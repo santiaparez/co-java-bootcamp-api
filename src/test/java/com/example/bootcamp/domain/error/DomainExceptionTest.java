@@ -8,10 +8,10 @@ class DomainExceptionTest {
 
   @Test
   void exposesCodeAndMessage() {
-    DomainException exception = new DomainException(ErrorCodes.BRANCH_NOT_FOUND, "branch.not.found");
+    DomainException exception = new DomainException(ErrorCodes.TECHNOLOGY_NOT_FOUND, "technology.not.found");
 
-    assertEquals(ErrorCodes.BRANCH_NOT_FOUND, exception.getCode());
-    assertEquals("branch.not.found", exception.getMessage());
+    assertEquals(ErrorCodes.TECHNOLOGY_NOT_FOUND, exception.getCode());
+    assertEquals("technology.not.found", exception.getMessage());
   }
 }
 
