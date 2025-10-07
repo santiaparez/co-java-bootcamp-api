@@ -1,33 +1,47 @@
 package com.example.bootcamp.domain.model;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 
-public record Bootcamp(String id, String name, String description, List<String> technologies) {
+public record Bootcamp(
+    String id,
+    String name,
+    String description,
+    LocalDate launchDate,
+    int durationWeeks,
+    List<String> capabilities
+) {
   public Bootcamp {
-    if (name == null || name.isBlank() || name.length() > 50) {
-      throw new IllegalArgumentException("invalid.tech.name");
+    if (name == null || name.isBlank() || name.length() > 100) {
+      throw new IllegalArgumentException("invalid.bootcamp.name");
     }
-    if (description == null || description.isBlank() || description.length() > 90) {
-      throw new IllegalArgumentException("invalid.tech.description");
+    if (description == null || description.isBlank()) {
+      throw new IllegalArgumentException("invalid.bootcamp.description");
     }
-    if (technologies == null) {
-      throw new IllegalArgumentException("invalid.bootcamp.technologies.required");
+    if (launchDate == null) {
+      throw new IllegalArgumentException("invalid.bootcamp.launch.date");
+    }
+    if (durationWeeks <= 0) {
+      throw new IllegalArgumentException("invalid.bootcamp.duration");
+    }
+    if (capabilities == null) {
+      throw new IllegalArgumentException("invalid.bootcamp.capabilities.required");
     }
 
-    technologies = List.copyOf(technologies);
+    capabilities = List.copyOf(capabilities);
 
-    if (technologies.size() < 3) {
-      throw new IllegalArgumentException("invalid.bootcamp.technologies.min");
+    if (capabilities.size() < 1) {
+      throw new IllegalArgumentException("invalid.bootcamp.capabilities.min");
     }
-    if (technologies.size() > 20) {
-      throw new IllegalArgumentException("invalid.bootcamp.technologies.max");
+    if (capabilities.size() > 4) {
+      throw new IllegalArgumentException("invalid.bootcamp.capabilities.max");
     }
-    if (technologies.stream().anyMatch(t -> t == null || t.isBlank())) {
-      throw new IllegalArgumentException("invalid.bootcamp.technologies.blank");
+    if (capabilities.stream().anyMatch(capability -> capability == null || capability.isBlank())) {
+      throw new IllegalArgumentException("invalid.bootcamp.capabilities.blank");
     }
-    if (new HashSet<>(technologies).size() != technologies.size()) {
-      throw new IllegalArgumentException("invalid.bootcamp.technologies.duplicated");
+    if (new HashSet<>(capabilities).size() != capabilities.size()) {
+      throw new IllegalArgumentException("invalid.bootcamp.capabilities.duplicated");
     }
   }
 }
