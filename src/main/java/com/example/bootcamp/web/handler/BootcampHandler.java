@@ -8,6 +8,7 @@ import com.example.bootcamp.domain.model.BootcampSummary;
 import com.example.bootcamp.domain.model.SortDirection;
 import com.example.bootcamp.domain.model.TechnologySummary;
 import com.example.bootcamp.domain.usecase.CreateBootcampUseCase;
+import com.example.bootcamp.domain.usecase.DeleteBootcampUseCase;
 import com.example.bootcamp.domain.usecase.ListBootcampUseCase;
 import com.example.bootcamp.web.dto.Requests.*;
 import com.example.bootcamp.web.dto.Responses.*;
@@ -26,9 +27,18 @@ public class BootcampHandler {
   private final Validator validator;
   private final CreateBootcampUseCase createBootcamp;
   private final ListBootcampUseCase listBootcamp;
+  private final DeleteBootcampUseCase deleteBootcampUseCase;
 
-  public BootcampHandler(Validator validator, CreateBootcampUseCase createBootcamp, ListBootcampUseCase listBootcamp) {
-    this.validator = validator; this.createBootcamp = createBootcamp; this.listBootcamp = listBootcamp;
+  public BootcampHandler(
+      Validator validator,
+      CreateBootcampUseCase createBootcamp,
+      ListBootcampUseCase listBootcamp,
+      DeleteBootcampUseCase deleteBootcamp
+  ) {
+    this.validator = validator;
+    this.createBootcamp = createBootcamp;
+    this.listBootcamp = listBootcamp;
+    this.deleteBootcampUseCase = deleteBootcamp;
   }
 
   public Mono<ServerResponse> createBootcamp(ServerRequest req){
@@ -44,6 +54,13 @@ public class BootcampHandler {
             .flatMap(listBootcamp::execute)
             .flatMap(page -> okJson(Mapper.page(page)))
             .onErrorResume(DomainException.class, ex -> problem(mapHttp(ex.getCode()), ex.getMessage()));
+  }
+
+  public Mono<ServerResponse> deleteBootcamp(ServerRequest req) {
+    String bootcampId = req.pathVariable("id");
+    return deleteBootcampUseCase.execute(bootcampId)
+        .then(ServerResponse.noContent().build())
+        .onErrorResume(DomainException.class, ex -> problem(mapHttp(ex.getCode()), ex.getMessage()));
   }
 
 
@@ -131,6 +148,7 @@ public class BootcampHandler {
   private int mapHttp(com.example.bootcamp.domain.error.ErrorCodes code){
     return switch (code){
       case TECHNOLOGY_NOT_FOUND, BRANCH_NOT_FOUND, PRODUCT_NOT_FOUND -> 404;
+      case BOOTCAMP_NOT_FOUND -> 404;
       case VALIDATION_ERROR -> 400;
       case CONFLICT -> 409;
       default -> 500;

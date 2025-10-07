@@ -61,6 +61,15 @@ public class SpringDataBootcampRepository {
         .thenReturn(bootcamp);
   }
 
+  public Mono<Void> deleteById(String bootcampId) {
+    return template.getDatabaseClient()
+        .sql("CALL bootcamp.delete_bootcamp(:bootcampId)")
+        .bind("bootcampId", bootcampId)
+        .fetch()
+        .rowsUpdated()
+        .then();
+  }
+
   public Mono<PaginatedBootcamp> findAll(BootcampPageRequest request) {
     int offset = request.page() * request.size();
     String orderColumn = switch (request.sortBy()) {

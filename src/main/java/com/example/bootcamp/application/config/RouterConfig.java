@@ -16,6 +16,7 @@ public class RouterConfig {
       RouterFunctions.route()
         .POST("/bootcamp", h::createBootcamp)
         .GET("/bootcamp", h::getAllBootcamp)
+        .DELETE("/bootcamp/{id}", h::deleteBootcamp)
         .build()
     );
   }
