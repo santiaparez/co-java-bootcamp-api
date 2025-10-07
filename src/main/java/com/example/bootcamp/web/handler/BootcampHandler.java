@@ -1,10 +1,12 @@
 package com.example.bootcamp.web.handler;
 
 import com.example.bootcamp.domain.error.DomainException;
+import com.example.bootcamp.domain.error.ErrorCodes;
 import com.example.bootcamp.domain.model.BootcampPageRequest;
 import com.example.bootcamp.domain.model.BootcampSortField;
-import com.example.bootcamp.domain.model.PaginatedBootcamp;
 import com.example.bootcamp.domain.model.BootcampSummary;
+import com.example.bootcamp.domain.model.CapabilitySummary;
+import com.example.bootcamp.domain.model.PaginatedBootcamp;
 import com.example.bootcamp.domain.model.SortDirection;
 import com.example.bootcamp.domain.model.TechnologySummary;
 import com.example.bootcamp.domain.usecase.CreateBootcampUseCase;
@@ -19,6 +21,11 @@ import org.springframework.validation.Validator;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.springframework.web.reactive.function.BodyInserters.fromValue;
 
@@ -49,11 +56,10 @@ public class BootcampHandler {
   }
 
   public Mono<ServerResponse> getAllBootcamp(ServerRequest req) {
-    return Mono.justOrEmpty(parseRequest(req))
-            .switchIfEmpty(Mono.error(new DomainException(com.example.bootcamp.domain.error.ErrorCodes.VALIDATION_ERROR, "invalid.pagination.parameters")))
-            .flatMap(listBootcamp::execute)
-            .flatMap(page -> okJson(Mapper.page(page)))
-            .onErrorResume(DomainException.class, ex -> problem(mapHttp(ex.getCode()), ex.getMessage()));
+    return parsePageRequest(req)
+        .flatMap(listBootcamp::execute)
+        .flatMap(page -> okJson(Mapper.page(page)))
+        .onErrorResume(DomainException.class, ex -> problem(mapHttp(ex.getCode()), ex.getMessage()));
   }
 
   public Mono<ServerResponse> deleteBootcamp(ServerRequest req) {
@@ -88,7 +94,7 @@ public class BootcampHandler {
       );
     }
 
-    static CapabilityResponse capability(com.example.bootcamp.domain.model.CapabilitySummary capability) {
+    static CapabilityResponse capability(CapabilitySummary capability) {
       return new CapabilityResponse(
               capability.id(),
               capability.name(),
@@ -103,35 +109,61 @@ public class BootcampHandler {
     }
   }
 
-  private java.util.Optional<BootcampPageRequest> parseRequest(ServerRequest req) {
-    try {
-      int page = req.queryParam("page").map(Integer::parseInt).orElse(0);
-      int size = req.queryParam("size").map(Integer::parseInt).orElse(10);
-      BootcampSortField sortField = req.queryParam("sortBy")
+  private Mono<BootcampPageRequest> parsePageRequest(ServerRequest req) {
+    return Mono.fromCallable(() -> {
+          int page = parseIntQueryParam(req, "page", 0, "invalid.pagination.page");
+          int size = parseIntQueryParam(req, "size", 10, "invalid.pagination.size");
+          BootcampSortField sortField = req.queryParam("sortBy")
               .map(String::toUpperCase)
-              .map(value -> switch (value) {
-                case "NAME" -> BootcampSortField.NAME;
-                case "TECHNOLOGY_COUNT", "TECHNOLOGIES", "CAPABILITY_COUNT", "CAPABILITIES" -> BootcampSortField.CAPABILITY_COUNT;
-                default -> throw new IllegalArgumentException("invalid.sort.by");
-              })
+              .map(this::parseSortField)
               .orElse(BootcampSortField.NAME);
-      SortDirection direction = req.queryParam("order")
+          SortDirection direction = req.queryParam("order")
               .map(String::toUpperCase)
-              .map(SortDirection::valueOf)
+              .map(this::parseDirection)
               .orElse(SortDirection.ASC);
-      BootcampPageRequest request = new BootcampPageRequest(page, size, sortField, direction);
-      return java.util.Optional.of(request);
+          return new BootcampPageRequest(page, size, sortField, direction);
+        })
+        .onErrorMap(IllegalArgumentException.class, ex ->
+            new DomainException(ErrorCodes.VALIDATION_ERROR, Objects.requireNonNullElse(ex.getMessage(), "invalid.pagination.parameters"))
+        );
+  }
+
+  private int parseIntQueryParam(ServerRequest req, String name, int defaultValue, String errorMessage) {
+    return req.queryParam(name)
+        .map(value -> {
+          try {
+            return Integer.parseInt(value);
+          } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException(errorMessage);
+          }
+        })
+        .orElse(defaultValue);
+  }
+
+  private BootcampSortField parseSortField(String value) {
+    return switch (value) {
+      case "NAME" -> BootcampSortField.NAME;
+      case "TECHNOLOGY_COUNT", "TECHNOLOGIES", "CAPABILITY_COUNT", "CAPABILITIES" -> BootcampSortField.CAPABILITY_COUNT;
+      default -> throw new IllegalArgumentException("invalid.sort.by");
+    };
+  }
+
+  private SortDirection parseDirection(String value) {
+    try {
+      return SortDirection.valueOf(value);
     } catch (IllegalArgumentException ex) {
-      return java.util.Optional.empty();
+      throw new IllegalArgumentException("invalid.sort.order");
     }
   }
 
-  private <T> Mono<ServerResponse> validatedBody(ServerRequest req, Class<T> clazz, java.util.function.Function<T, Mono<ServerResponse>> fn){
+  private <T> Mono<ServerResponse> validatedBody(ServerRequest req, Class<T> clazz, Function<T, Mono<ServerResponse>> fn){
     return req.bodyToMono(clazz).flatMap(body -> {
       var errors = new BeanPropertyBindingResult(body, clazz.getSimpleName());
       validator.validate(body, errors);
       if (errors.hasErrors()) {
-        String msg = errors.getAllErrors().stream().map(e -> e.getDefaultMessage()==null?"validation.error":e.getDefaultMessage()).reduce((a,b) -> a+","+b).orElse("validation.error");
+        String msg = errors.getAllErrors().stream()
+            .map(error -> Objects.requireNonNullElse(error.getDefaultMessage(), "validation.error"))
+            .collect(Collectors.joining(","));
         return problem(400, msg);
       }
       return fn.apply(body);
@@ -143,9 +175,9 @@ public class BootcampHandler {
     return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(fromValue(any));
   }
   private Mono<ServerResponse> problem(int status, String message){
-    return ServerResponse.status(status).contentType(MediaType.APPLICATION_JSON).body(fromValue(java.util.Map.of("message", message)));
+    return ServerResponse.status(status).contentType(MediaType.APPLICATION_JSON).body(fromValue(Map.of("message", message)));
   }
-  private int mapHttp(com.example.bootcamp.domain.error.ErrorCodes code){
+  private int mapHttp(ErrorCodes code){
     return switch (code){
       case TECHNOLOGY_NOT_FOUND -> 404;
       case BOOTCAMP_NOT_FOUND -> 404;
