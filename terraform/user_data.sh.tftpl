@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+app_name="${app_name}"
+app_port="${app_port}"
+app_jar_url="${app_jar_url}"
+
+# Instala Java 17
+dnf update -y
+dnf install -y java-17-amazon-corretto curl
+
+# Usuario y carpeta
+useradd -r -s /sbin/nologin "${app_name}" || true
+mkdir -p /opt/${app_name}
+chown -R ${app_name}:${app_name} /opt/${app_name}
+
+# Descarga el JAR
+curl -L "${app_jar_url}" -o /opt/${app_name}/app.jar
+chown ${app_name}:${app_name} /opt/${app_name}/app.jar
+
+# systemd service
+cat >/etc/systemd/system/${app_name}.service <<EOF
+[Unit]
+Description=${app_name}
+After=network.target
+
+[Service]
+User=${app_name}
+WorkingDirectory=/opt/${app_name}
+Environment=SERVER_PORT=${app_port}
+ExecStart=/usr/bin/java -jar /opt/${app_name}/app.jar
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable ${app_name}
+systemctl start ${app_name}

@@ -1,0 +1,41 @@
+version: "3.9"
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: bootcamp
+      MYSQL_USER: tech_user
+      MYSQL_PASSWORD: tech_pass
+      MYSQL_ROOT_PASSWORD: root_pass
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "tech_user", "-ptech_pass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  app:
+    build: .
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: bootcamp
+      DB_USER: tech_user
+      DB_PASSWORD: tech_pass
+      SPRING_R2DBC_URL: r2dbc:pool:mysql://mysql:3306/bootcamp
+      SPRING_R2DBC_USERNAME: tech_user
+      SPRING_R2DBC_PASSWORD: tech_pass
+      SPRING_FLYWAY_URL: jdbc:mysql://mysql:3306/bootcamp
+      SPRING_FLYWAY_USER: tech_user
+      SPRING_FLYWAY_PASSWORD: tech_pass
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-data:

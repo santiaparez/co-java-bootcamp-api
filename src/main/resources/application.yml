@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: bootcamp-api
+  r2dbc:
+    url: r2dbc:pool:mysql://localhost:3306/bootcamp
+    username: root
+    password: 1234
+
+server:
+  port: 8081
+
+app:
+  datasource:
+    host: localhost
+    port: 3306
+    database: bootcamp
+    username: root
+    password: 1234
+
