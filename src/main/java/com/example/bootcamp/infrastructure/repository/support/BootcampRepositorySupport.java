@@ -18,6 +18,22 @@ public final class BootcampRepositorySupport {
   public static final String COLUMN_CAPABILITY_DESCRIPTION = "capability_description";
   public static final String COLUMN_TECHNOLOGY_ID = "technology_id";
   public static final String COLUMN_TECHNOLOGY_NAME = "technology_name";
+  public static final String BOOTCAMP_COLUMN_ID = "id";
+  public static final String BOOTCAMP_COLUMN_NAME = "name";
+  public static final String BOOTCAMP_ALIAS = "b";
+  public static final String BOOTCAMP_ALIAS_PREFIX = BOOTCAMP_ALIAS + ".";
+  public static final String PAGED_BOOTCAMP_ALIAS = "pb";
+  public static final String PAGED_BOOTCAMP_ALIAS_PREFIX = PAGED_BOOTCAMP_ALIAS + ".";
+  public static final String PARAM_LIMIT = "limit";
+  public static final String PARAM_OFFSET = "offset";
+  public static final String PARAM_VALUE = "value";
+  public static final String PARAM_BOOTCAMP_ID = "bootcampId";
+  public static final String PARAM_CAPABILITY_ID = "capabilityId";
+  public static final String COUNT_TOTAL_ALIAS = "total";
+  public static final String COUNT_BOOTCAMPS_QUERY = "SELECT COUNT(*) AS " + COUNT_TOTAL_ALIAS + " FROM bootcamp.bootcamps";
+  public static final String DELETE_BOOTCAMP_PROCEDURE = "CALL bootcamp.delete_bootcamp(:" + PARAM_BOOTCAMP_ID + ")";
+  public static final String INSERT_BOOTCAMP_CAPABILITY =
+      "INSERT INTO bootcamp.bootcamp_capability (bootcamp_id, capability_id) VALUES (:" + PARAM_BOOTCAMP_ID + ", :" + PARAM_CAPABILITY_ID + ")";
 
   public static final String BASE_SELECT = """
       SELECT b.id AS bootcamp_id,
