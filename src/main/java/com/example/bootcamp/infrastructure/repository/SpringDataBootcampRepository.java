@@ -24,6 +24,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BASE_SELECT;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BOOTCAMP_ALIAS_PREFIX;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BOOTCAMP_COLUMN_ID;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BOOTCAMP_COLUMN_NAME;
 import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_DESCRIPTION;
 import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_DURATION_WEEKS;
 import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_ID;
@@ -35,7 +38,17 @@ import static com.example.bootcamp.infrastructure.repository.support.BootcampRep
 import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_CAPABILITY_NAME;
 import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_TECHNOLOGY_ID;
 import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_TECHNOLOGY_NAME;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COUNT_BOOTCAMPS_QUERY;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COUNT_TOTAL_ALIAS;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.DELETE_BOOTCAMP_PROCEDURE;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.INSERT_BOOTCAMP_CAPABILITY;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PAGED_BOOTCAMP_ALIAS_PREFIX;
 import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PAGINATED_SELECT_TEMPLATE;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PARAM_BOOTCAMP_ID;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PARAM_CAPABILITY_ID;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PARAM_LIMIT;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PARAM_OFFSET;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PARAM_VALUE;
 
 import com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BootcampCapabilityRow;
 import com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BootcampCapabilityTechnologyDetailRow;
@@ -50,11 +63,11 @@ public class SpringDataBootcampRepository {
   }
 
   public Mono<Bootcamp> findById(String id) {
-    return findOneBy("id", id);
+    return findOneBy(BOOTCAMP_COLUMN_ID, id);
   }
 
   public Mono<Bootcamp> findByName(String name) {
-    return findOneBy("name", name);
+    return findOneBy(BOOTCAMP_COLUMN_NAME, name);
   }
 
   public Mono<Bootcamp> save(Bootcamp bootcamp) {
@@ -67,8 +80,8 @@ public class SpringDataBootcampRepository {
 
   public Mono<Void> deleteById(String bootcampId) {
     return template.getDatabaseClient()
-        .sql("CALL bootcamp.delete_bootcamp(:bootcampId)")
-        .bind("bootcampId", bootcampId)
+        .sql(DELETE_BOOTCAMP_PROCEDURE)
+        .bind(PARAM_BOOTCAMP_ID, bootcampId)
         .fetch()
         .rowsUpdated()
         .then();
@@ -76,16 +89,22 @@ public class SpringDataBootcampRepository {
 
   public Mono<PaginatedBootcamp> findAll(BootcampPageRequest request) {
     String orderColumn = switch (request.sortBy()) {
-      case NAME -> "name";
-      case CAPABILITY_COUNT -> "capability_count";
+      case NAME -> BOOTCAMP_COLUMN_NAME;
+      case CAPABILITY_COUNT -> COLUMN_CAPABILITY_COUNT;
     };
     String orderDirection = request.direction().name();
-    String sql = String.format(PAGINATED_SELECT_TEMPLATE, orderColumn, orderDirection, "pb." + orderColumn, orderDirection);
+    String sql = String.format(
+        PAGINATED_SELECT_TEMPLATE,
+        orderColumn,
+        orderDirection,
+        PAGED_BOOTCAMP_ALIAS_PREFIX + orderColumn,
+        orderDirection
+    );
 
     Mono<List<BootcampSummary>> bootcamps = template.getDatabaseClient()
         .sql(sql)
-        .bind("limit", request.size())
-        .bind("offset", request.page() * request.size())
+        .bind(PARAM_LIMIT, request.size())
+        .bind(PARAM_OFFSET, request.page() * request.size())
         .map(this::mapPagedRow)
         .all()
         .transform(this::groupRowsByBootcamp)
@@ -103,9 +122,9 @@ public class SpringDataBootcampRepository {
   private Mono<Void> insertBootcampCapabilities(String bootcampId, List<String> capabilities) {
     return Flux.fromIterable(capabilities)
         .concatMap(capabilityId -> template.getDatabaseClient()
-            .sql("INSERT INTO bootcamp.bootcamp_capability (bootcamp_id, capability_id) VALUES (:bootcampId, :capabilityId)")
-            .bind("bootcampId", bootcampId)
-            .bind("capabilityId", capabilityId)
+            .sql(INSERT_BOOTCAMP_CAPABILITY)
+            .bind(PARAM_BOOTCAMP_ID, bootcampId)
+            .bind(PARAM_CAPABILITY_ID, capabilityId)
             .fetch()
             .rowsUpdated())
         .then();
@@ -134,8 +153,8 @@ public class SpringDataBootcampRepository {
 
   private Mono<Bootcamp> findOneBy(String column, String value) {
     return template.getDatabaseClient()
-        .sql(BASE_SELECT + " WHERE b." + column + " = :value")
-        .bind("value", value)
+        .sql(BASE_SELECT + " WHERE " + BOOTCAMP_ALIAS_PREFIX + column + " = :" + PARAM_VALUE)
+        .bind(PARAM_VALUE, value)
         .map(this::mapRow)
         .all()
         .collectList()
@@ -232,9 +251,9 @@ public class SpringDataBootcampRepository {
 
   private Mono<Long> countBootcamps() {
     return template.getDatabaseClient()
-        .sql("SELECT COUNT(*) AS total FROM bootcamp.bootcamps")
+        .sql(COUNT_BOOTCAMPS_QUERY)
         .map((row, metadata) -> {
-          Number count = row.get("total", Number.class);
+          Number count = row.get(COUNT_TOTAL_ALIAS, Number.class);
           return count == null ? 0L : count.longValue();
         })
         .one()
