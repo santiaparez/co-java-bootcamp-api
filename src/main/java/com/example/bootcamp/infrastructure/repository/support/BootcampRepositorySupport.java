@@ -7,6 +7,18 @@ public final class BootcampRepositorySupport {
   private BootcampRepositorySupport() {
   }
 
+  public static final String COLUMN_BOOTCAMP_ID = "bootcamp_id";
+  public static final String COLUMN_BOOTCAMP_NAME = "bootcamp_name";
+  public static final String COLUMN_BOOTCAMP_DESCRIPTION = "bootcamp_description";
+  public static final String COLUMN_BOOTCAMP_LAUNCH_DATE = "bootcamp_launch_date";
+  public static final String COLUMN_BOOTCAMP_DURATION_WEEKS = "bootcamp_duration_weeks";
+  public static final String COLUMN_CAPABILITY_COUNT = "capability_count";
+  public static final String COLUMN_CAPABILITY_ID = "capability_id";
+  public static final String COLUMN_CAPABILITY_NAME = "capability_name";
+  public static final String COLUMN_CAPABILITY_DESCRIPTION = "capability_description";
+  public static final String COLUMN_TECHNOLOGY_ID = "technology_id";
+  public static final String COLUMN_TECHNOLOGY_NAME = "technology_name";
+
   public static final String BASE_SELECT = """
       SELECT b.id AS bootcamp_id,
              b.name AS bootcamp_name,

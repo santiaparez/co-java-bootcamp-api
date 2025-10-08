@@ -24,6 +24,17 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BASE_SELECT;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_DESCRIPTION;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_DURATION_WEEKS;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_ID;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_LAUNCH_DATE;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_NAME;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_CAPABILITY_COUNT;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_CAPABILITY_DESCRIPTION;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_CAPABILITY_ID;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_CAPABILITY_NAME;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_TECHNOLOGY_ID;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_TECHNOLOGY_NAME;
 import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PAGINATED_SELECT_TEMPLATE;
 
 import com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BootcampCapabilityRow;
@@ -133,29 +144,29 @@ public class SpringDataBootcampRepository {
 
   private BootcampCapabilityRow mapRow(Row row, RowMetadata metadata) {
     return new BootcampCapabilityRow(
-        row.get("bootcamp_id", String.class),
-        row.get("bootcamp_name", String.class),
-        row.get("bootcamp_description", String.class),
-        row.get("bootcamp_launch_date", LocalDate.class),
-        row.get("bootcamp_duration_weeks", Integer.class),
-        row.get("capability_id", String.class)
+        row.get(COLUMN_BOOTCAMP_ID, String.class),
+        row.get(COLUMN_BOOTCAMP_NAME, String.class),
+        row.get(COLUMN_BOOTCAMP_DESCRIPTION, String.class),
+        row.get(COLUMN_BOOTCAMP_LAUNCH_DATE, LocalDate.class),
+        row.get(COLUMN_BOOTCAMP_DURATION_WEEKS, Integer.class),
+        row.get(COLUMN_CAPABILITY_ID, String.class)
     );
   }
 
   private BootcampCapabilityTechnologyDetailRow mapPagedRow(Row row, RowMetadata metadata) {
-    Number capabilityCount = row.get("capability_count", Number.class);
+    Number capabilityCount = row.get(COLUMN_CAPABILITY_COUNT, Number.class);
     return new BootcampCapabilityTechnologyDetailRow(
-        row.get("bootcamp_id", String.class),
-        row.get("bootcamp_name", String.class),
-        row.get("bootcamp_description", String.class),
-        row.get("bootcamp_launch_date", LocalDate.class),
-        row.get("bootcamp_duration_weeks", Integer.class),
+        row.get(COLUMN_BOOTCAMP_ID, String.class),
+        row.get(COLUMN_BOOTCAMP_NAME, String.class),
+        row.get(COLUMN_BOOTCAMP_DESCRIPTION, String.class),
+        row.get(COLUMN_BOOTCAMP_LAUNCH_DATE, LocalDate.class),
+        row.get(COLUMN_BOOTCAMP_DURATION_WEEKS, Integer.class),
         capabilityCount == null ? 0 : capabilityCount.intValue(),
-        row.get("capability_id", String.class),
-        row.get("capability_name", String.class),
-        row.get("capability_description", String.class),
-        row.get("technology_id", String.class),
-        row.get("technology_name", String.class)
+        row.get(COLUMN_CAPABILITY_ID, String.class),
+        row.get(COLUMN_CAPABILITY_NAME, String.class),
+        row.get(COLUMN_CAPABILITY_DESCRIPTION, String.class),
+        row.get(COLUMN_TECHNOLOGY_ID, String.class),
+        row.get(COLUMN_TECHNOLOGY_NAME, String.class)
     );
   }
 
