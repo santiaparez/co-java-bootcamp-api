@@ -23,11 +23,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.example.bootcamp.infrastructure.repository.BootcampRepositorySupport.BASE_SELECT;
-import static com.example.bootcamp.infrastructure.repository.BootcampRepositorySupport.PAGINATED_SELECT_TEMPLATE;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BASE_SELECT;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PAGINATED_SELECT_TEMPLATE;
 
-import com.example.bootcamp.infrastructure.repository.BootcampRepositorySupport.BootcampCapabilityRow;
-import com.example.bootcamp.infrastructure.repository.BootcampRepositorySupport.BootcampCapabilityTechnologyDetailRow;
+import com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BootcampCapabilityRow;
+import com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BootcampCapabilityTechnologyDetailRow;
 
 @Repository
 public class SpringDataBootcampRepository {

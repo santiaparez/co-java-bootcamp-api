@@ -1,13 +1,13 @@
-package com.example.bootcamp.infrastructure.repository;
+package com.example.bootcamp.infrastructure.repository.support;
 
 import java.time.LocalDate;
 
-final class BootcampRepositorySupport {
+public final class BootcampRepositorySupport {
 
   private BootcampRepositorySupport() {
   }
 
-  static final String BASE_SELECT = """
+  public static final String BASE_SELECT = """
       SELECT b.id AS bootcamp_id,
              b.name AS bootcamp_name,
              b.description AS bootcamp_description,
@@ -18,7 +18,7 @@ final class BootcampRepositorySupport {
       LEFT JOIN bootcamp.bootcamp_capability bc ON bc.bootcamp_id = b.id
       """;
 
-  static final String PAGINATED_SELECT_TEMPLATE = """
+  public static final String PAGINATED_SELECT_TEMPLATE = """
       WITH bootcamp_counts AS (
           SELECT b.id,
                  b.name,
@@ -60,7 +60,7 @@ final class BootcampRepositorySupport {
       ORDER BY %s %s, pb.id ASC, c.name ASC, c.id ASC, t.name ASC, t.id ASC
       """;
 
-  static record BootcampCapabilityRow(
+  public static record BootcampCapabilityRow(
       String bootcampId,
       String bootcampName,
       String bootcampDescription,
@@ -70,7 +70,7 @@ final class BootcampRepositorySupport {
   ) {
   }
 
-  static record BootcampCapabilityTechnologyDetailRow(
+  public static record BootcampCapabilityTechnologyDetailRow(
       String bootcampId,
       String bootcampName,
       String bootcampDescription,
