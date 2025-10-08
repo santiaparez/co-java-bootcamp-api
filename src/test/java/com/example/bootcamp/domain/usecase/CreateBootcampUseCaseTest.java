@@ -2,7 +2,6 @@ package com.example.bootcamp.domain.usecase;
 
 import com.example.bootcamp.domain.error.DomainException;
 import com.example.bootcamp.domain.model.Bootcamp;
-import com.example.bootcamp.domain.usecase.CreateBootcampUseCase;
 import com.example.bootcamp.infrastructure.repository.SpringDataBootcampRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
