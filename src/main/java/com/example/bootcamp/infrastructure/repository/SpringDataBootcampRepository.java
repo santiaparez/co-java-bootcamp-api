@@ -23,35 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BASE_SELECT;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BOOTCAMP_ALIAS_PREFIX;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BOOTCAMP_COLUMN_ID;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BOOTCAMP_COLUMN_NAME;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_DESCRIPTION;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_DURATION_WEEKS;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_ID;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_LAUNCH_DATE;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_BOOTCAMP_NAME;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_CAPABILITY_COUNT;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_CAPABILITY_DESCRIPTION;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_CAPABILITY_ID;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_CAPABILITY_NAME;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_TECHNOLOGY_ID;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COLUMN_TECHNOLOGY_NAME;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COUNT_BOOTCAMPS_QUERY;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.COUNT_TOTAL_ALIAS;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.DELETE_BOOTCAMP_PROCEDURE;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.INSERT_BOOTCAMP_CAPABILITY;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PAGED_BOOTCAMP_ALIAS_PREFIX;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PAGINATED_SELECT_TEMPLATE;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PARAM_BOOTCAMP_ID;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PARAM_CAPABILITY_ID;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PARAM_LIMIT;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PARAM_OFFSET;
-import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.PARAM_VALUE;
-
-import com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BootcampCapabilityRow;
-import com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.BootcampCapabilityTechnologyDetailRow;
+import static com.example.bootcamp.infrastructure.repository.support.BootcampRepositorySupport.*;
 
 @Repository
 public class SpringDataBootcampRepository {
