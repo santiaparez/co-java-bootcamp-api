@@ -23,6 +23,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static com.example.bootcamp.infrastructure.repository.BootcampRepositorySupport.BASE_SELECT;
+import static com.example.bootcamp.infrastructure.repository.BootcampRepositorySupport.PAGINATED_SELECT_TEMPLATE;
+
+import com.example.bootcamp.infrastructure.repository.BootcampRepositorySupport.BootcampCapabilityRow;
+import com.example.bootcamp.infrastructure.repository.BootcampRepositorySupport.BootcampCapabilityTechnologyDetailRow;
+
 @Repository
 public class SpringDataBootcampRepository {
 
@@ -153,29 +159,6 @@ public class SpringDataBootcampRepository {
     );
   }
 
-  private record BootcampCapabilityRow(
-      String bootcampId,
-      String bootcampName,
-      String bootcampDescription,
-      LocalDate launchDate,
-      Integer durationWeeks,
-      String capabilityId
-  ) {}
-
-  private record BootcampCapabilityTechnologyDetailRow(
-      String bootcampId,
-      String bootcampName,
-      String bootcampDescription,
-      LocalDate launchDate,
-      Integer durationWeeks,
-      int capabilityCount,
-      String capabilityId,
-      String capabilityName,
-      String capabilityDescription,
-      String technologyId,
-      String technologyName
-  ) {}
-
   private Flux<BootcampSummary> groupRowsByBootcamp(Flux<BootcampCapabilityTechnologyDetailRow> rows) {
     return rows.groupBy(BootcampCapabilityTechnologyDetailRow::bootcampId)
         .concatMap(group -> group.collectList().map(this::mapToBootcampSummary));
@@ -235,59 +218,6 @@ public class SpringDataBootcampRepository {
         technologies.size()
     );
   }
-
-  private static final String BASE_SELECT = """
-      SELECT b.id AS bootcamp_id,
-             b.name AS bootcamp_name,
-             b.description AS bootcamp_description,
-             b.launch_date AS bootcamp_launch_date,
-             b.duration_weeks AS bootcamp_duration_weeks,
-             bc.capability_id AS capability_id
-      FROM bootcamp.bootcamps b
-      LEFT JOIN bootcamp.bootcamp_capability bc ON bc.bootcamp_id = b.id
-      """;
-
-  private static final String PAGINATED_SELECT_TEMPLATE = """
-      WITH bootcamp_counts AS (
-          SELECT b.id,
-                 b.name,
-                 b.description,
-                 b.launch_date,
-                 b.duration_weeks,
-                 COUNT(DISTINCT bc.capability_id) AS capability_count
-          FROM bootcamp.bootcamps b
-          LEFT JOIN bootcamp.bootcamp_capability bc ON bc.bootcamp_id = b.id
-          GROUP BY b.id, b.name, b.description, b.launch_date, b.duration_weeks
-      ),
-      paged_bootcamps AS (
-          SELECT id,
-                 name,
-                 description,
-                 launch_date,
-                 duration_weeks,
-                 capability_count
-          FROM bootcamp_counts
-          ORDER BY %s %s, id ASC
-          LIMIT :limit OFFSET :offset
-      )
-      SELECT pb.id AS bootcamp_id,
-             pb.name AS bootcamp_name,
-             pb.description AS bootcamp_description,
-             pb.launch_date AS bootcamp_launch_date,
-             pb.duration_weeks AS bootcamp_duration_weeks,
-             pb.capability_count AS capability_count,
-             c.id AS capability_id,
-             c.name AS capability_name,
-             c.description AS capability_description,
-             t.id AS technology_id,
-             t.name AS technology_name
-      FROM paged_bootcamps pb
-      LEFT JOIN bootcamp.bootcamp_capability bc ON bc.bootcamp_id = pb.id
-      LEFT JOIN bootcamp.capabilities c ON c.id = bc.capability_id
-      LEFT JOIN bootcamp.capability_technology ct ON ct.capability_id = c.id
-      LEFT JOIN bootcamp.technologies t ON t.id = ct.technology_id
-      ORDER BY %s %s, pb.id ASC, c.name ASC, c.id ASC, t.name ASC, t.id ASC
-      """;
 
   private Mono<Long> countBootcamps() {
     return template.getDatabaseClient()
