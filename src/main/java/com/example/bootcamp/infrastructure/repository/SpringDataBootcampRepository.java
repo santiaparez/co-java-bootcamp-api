@@ -5,7 +5,6 @@ import com.example.bootcamp.domain.model.BootcampPageRequest;
 import com.example.bootcamp.domain.model.BootcampSummary;
 import com.example.bootcamp.domain.model.CapabilitySummary;
 import com.example.bootcamp.domain.model.PaginatedBootcamp;
-import com.example.bootcamp.domain.model.SortDirection;
 import com.example.bootcamp.domain.model.TechnologySummary;
 import com.example.bootcamp.infrastructure.mapper.BootcampMapper;
 import com.example.bootcamp.infrastructure.repository.documents.BootcampEntity;
@@ -34,23 +33,11 @@ public class SpringDataBootcampRepository {
   }
 
   public Mono<Bootcamp> findById(String id) {
-    return template.getDatabaseClient()
-        .sql(BASE_SELECT + " WHERE b.id = :id")
-        .bind("id", id)
-        .map(this::mapRow)
-        .all()
-        .collectList()
-        .flatMap(this::mapSingleResult);
+    return findOneBy("id", id);
   }
 
   public Mono<Bootcamp> findByName(String name) {
-    return template.getDatabaseClient()
-        .sql(BASE_SELECT + " WHERE b.name = :name")
-        .bind("name", name)
-        .map(this::mapRow)
-        .all()
-        .collectList()
-        .flatMap(this::mapSingleResult);
+    return findOneBy("name", name);
   }
 
   public Mono<Bootcamp> save(Bootcamp bootcamp) {
@@ -71,41 +58,27 @@ public class SpringDataBootcampRepository {
   }
 
   public Mono<PaginatedBootcamp> findAll(BootcampPageRequest request) {
-    int offset = request.page() * request.size();
     String orderColumn = switch (request.sortBy()) {
       case NAME -> "name";
       case CAPABILITY_COUNT -> "capability_count";
     };
-    String orderDirection = request.direction() == SortDirection.DESC ? "DESC" : "ASC";
-    String qualifiedOrderColumn = "pb." + orderColumn;
+    String orderDirection = request.direction().name();
+    String sql = String.format(PAGINATED_SELECT_TEMPLATE, orderColumn, orderDirection, "pb." + orderColumn, orderDirection);
 
-    String sql = String.format(PAGINATED_SELECT_TEMPLATE, orderColumn, orderDirection, qualifiedOrderColumn, orderDirection);
-
-    Flux<BootcampCapabilityTechnologyDetailRow> rows = template.getDatabaseClient()
+    Mono<List<BootcampSummary>> bootcamps = template.getDatabaseClient()
         .sql(sql)
         .bind("limit", request.size())
-        .bind("offset", offset)
+        .bind("offset", request.page() * request.size())
         .map(this::mapPagedRow)
-        .all();
-
-    Mono<List<BootcampSummary>> bootcamps = rows
+        .all()
         .transform(this::groupRowsByBootcamp)
         .collectList();
 
-    Mono<Long> total = template.getDatabaseClient()
-        .sql("SELECT COUNT(*) AS total FROM bootcamp.bootcamps")
-        .map((row, metadata) -> {
-          Number count = row.get("total", Number.class);
-          return count == null ? 0L : count.longValue();
-        })
-        .one()
-        .defaultIfEmpty(0L);
-
-    return Mono.zip(bootcamps, total)
+    return Mono.zip(bootcamps, countBootcamps())
         .map(tuple -> {
           List<BootcampSummary> content = tuple.getT1();
           long totalElements = tuple.getT2();
-          int totalPages = request.size() == 0 ? 0 : (int) Math.ceil(totalElements / (double) request.size());
+          int totalPages = (int) Math.ceil(totalElements / (double) request.size());
           return new PaginatedBootcamp(content, request.page(), request.size(), totalElements, totalPages);
         });
   }
@@ -125,23 +98,31 @@ public class SpringDataBootcampRepository {
     if (rows.isEmpty()) {
       return Mono.empty();
     }
-    return Mono.fromCallable(() -> mapToDomain(rows));
+    return Mono.fromCallable(() -> {
+      var first = rows.get(0);
+      var capabilities = rows.stream()
+          .map(BootcampCapabilityRow::capabilityId)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toCollection(LinkedHashSet::new));
+      return BootcampMapper.toDomain(
+          first.bootcampId(),
+          first.bootcampName(),
+          first.bootcampDescription(),
+          first.launchDate(),
+          first.durationWeeks(),
+          List.copyOf(capabilities)
+      );
+    });
   }
 
-  private Bootcamp mapToDomain(List<BootcampCapabilityRow> rows) {
-    var first = rows.get(0);
-    var capabilities = rows.stream()
-        .map(BootcampCapabilityRow::capabilityId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toCollection(LinkedHashSet::new));
-    return BootcampMapper.toDomain(
-        first.bootcampId(),
-        first.bootcampName(),
-        first.bootcampDescription(),
-        first.launchDate(),
-        first.durationWeeks(),
-        List.copyOf(capabilities)
-    );
+  private Mono<Bootcamp> findOneBy(String column, String value) {
+    return template.getDatabaseClient()
+        .sql(BASE_SELECT + " WHERE b." + column + " = :value")
+        .bind("value", value)
+        .map(this::mapRow)
+        .all()
+        .collectList()
+        .flatMap(this::mapSingleResult);
   }
 
   private BootcampCapabilityRow mapRow(Row row, RowMetadata metadata) {
@@ -307,4 +288,15 @@ public class SpringDataBootcampRepository {
       LEFT JOIN bootcamp.technologies t ON t.id = ct.technology_id
       ORDER BY %s %s, pb.id ASC, c.name ASC, c.id ASC, t.name ASC, t.id ASC
       """;
+
+  private Mono<Long> countBootcamps() {
+    return template.getDatabaseClient()
+        .sql("SELECT COUNT(*) AS total FROM bootcamp.bootcamps")
+        .map((row, metadata) -> {
+          Number count = row.get("total", Number.class);
+          return count == null ? 0L : count.longValue();
+        })
+        .one()
+        .defaultIfEmpty(0L);
+  }
 }
