@@ -88,6 +88,26 @@ public final class BootcampRepositorySupport {
       ORDER BY %s %s, pb.id ASC, c.name ASC, c.id ASC, t.name ASC, t.id ASC
       """;
 
+  public static final String SELECT_BOOTCAMP_DETAILS_BY_ID = String.format("""
+      SELECT b.id AS bootcamp_id,
+             b.name AS bootcamp_name,
+             b.description AS bootcamp_description,
+             b.launch_date AS bootcamp_launch_date,
+             b.duration_weeks AS bootcamp_duration_weeks,
+             c.id AS capability_id,
+             c.name AS capability_name,
+             c.description AS capability_description,
+             t.id AS technology_id,
+             t.name AS technology_name
+      FROM bootcamp.bootcamps b
+      LEFT JOIN bootcamp.bootcamp_capability bc ON bc.bootcamp_id = b.id
+      LEFT JOIN bootcamp.capabilities c ON c.id = bc.capability_id
+      LEFT JOIN bootcamp.capability_technology ct ON ct.capability_id = c.id
+      LEFT JOIN bootcamp.technologies t ON t.id = ct.technology_id
+      WHERE b.id = :%s
+      ORDER BY b.id ASC, c.name ASC, c.id ASC, t.name ASC, t.id ASC
+      """, PARAM_BOOTCAMP_ID);
+
   public static record BootcampCapabilityRow(
       String bootcampId,
       String bootcampName,
