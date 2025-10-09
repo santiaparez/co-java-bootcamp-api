@@ -3,6 +3,7 @@ package com.example.bootcamp.application.config;
 import com.example.bootcamp.domain.usecase.CreateBootcampUseCase;
 import com.example.bootcamp.domain.usecase.DeleteBootcampUseCase;
 import com.example.bootcamp.domain.usecase.ListBootcampUseCase;
+import com.example.bootcamp.infrastructure.client.BootcampReportClient;
 import com.example.bootcamp.infrastructure.repository.SpringDataBootcampRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +12,8 @@ import org.springframework.context.annotation.Configuration;
 public class UseCasesConfig {
 
     @Bean
-    public CreateBootcampUseCase createBootcampUseCase(SpringDataBootcampRepository repo) {
-        return new CreateBootcampUseCase(repo);
+    public CreateBootcampUseCase createBootcampUseCase(SpringDataBootcampRepository repo, BootcampReportClient client) {
+        return new CreateBootcampUseCase(repo, client);
     }
 
     @Bean

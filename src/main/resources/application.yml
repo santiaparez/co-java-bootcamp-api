@@ -16,4 +16,7 @@ app:
     database: bootcamp
     username: root
     password: 1234
+  bootcamp-report:
+    base-url: http://localhost:8085
+    path: /bootcamp-reports
 

@@ -50,6 +50,21 @@ public class SpringDataBootcampRepository {
         .thenReturn(bootcamp);
   }
 
+  public Mono<BootcampSummary> findSummaryById(String bootcampId) {
+    return template.getDatabaseClient()
+        .sql(SELECT_BOOTCAMP_DETAILS_BY_ID)
+        .bind(PARAM_BOOTCAMP_ID, bootcampId)
+        .map(this::mapDetailRow)
+        .all()
+        .collectList()
+        .flatMap(rows -> {
+          if (rows.isEmpty()) {
+            return Mono.empty();
+          }
+          return Mono.fromCallable(() -> mapToBootcampSummary(rows));
+        });
+  }
+
   public Mono<Void> deleteById(String bootcampId) {
     return template.getDatabaseClient()
         .sql(DELETE_BOOTCAMP_PROCEDURE)
@@ -161,6 +176,22 @@ public class SpringDataBootcampRepository {
     );
   }
 
+  private BootcampCapabilityTechnologyDetailRow mapDetailRow(Row row, RowMetadata metadata) {
+    return new BootcampCapabilityTechnologyDetailRow(
+        row.get(COLUMN_BOOTCAMP_ID, String.class),
+        row.get(COLUMN_BOOTCAMP_NAME, String.class),
+        row.get(COLUMN_BOOTCAMP_DESCRIPTION, String.class),
+        row.get(COLUMN_BOOTCAMP_LAUNCH_DATE, LocalDate.class),
+        row.get(COLUMN_BOOTCAMP_DURATION_WEEKS, Integer.class),
+        0,
+        row.get(COLUMN_CAPABILITY_ID, String.class),
+        row.get(COLUMN_CAPABILITY_NAME, String.class),
+        row.get(COLUMN_CAPABILITY_DESCRIPTION, String.class),
+        row.get(COLUMN_TECHNOLOGY_ID, String.class),
+        row.get(COLUMN_TECHNOLOGY_NAME, String.class)
+    );
+  }
+
   private Flux<BootcampSummary> groupRowsByBootcamp(Flux<BootcampCapabilityTechnologyDetailRow> rows) {
     return rows.groupBy(BootcampCapabilityTechnologyDetailRow::bootcampId)
         .concatMap(group -> group.collectList().map(this::mapToBootcampSummary));
@@ -188,6 +219,11 @@ public class SpringDataBootcampRepository {
       throw new IllegalStateException("bootcamp.duration.null");
     }
 
+    int capabilityCount = first.capabilityCount();
+    if (capabilityCount == 0) {
+      capabilityCount = capabilitySummaries.size();
+    }
+
     return new BootcampSummary(
         first.bootcampId(),
         first.bootcampName(),
@@ -195,7 +231,7 @@ public class SpringDataBootcampRepository {
         first.launchDate(),
         durationWeeks,
         capabilitySummaries,
-        first.capabilityCount()
+        capabilityCount
     );
   }
 
